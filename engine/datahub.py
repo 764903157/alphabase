@@ -83,6 +83,17 @@ class MarketDB:
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_kline_code ON kline(code)")
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_kline_freq  ON kline(freq)")
         self.conn.execute("CREATE INDEX IF NOT EXISTS idx_kline_ts   ON kline(ts)")
+        # 研究笔记持久化
+        self.conn.execute("CREATE SEQUENCE IF NOT EXISTS notebook_id_seq")
+        self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS notebook_sessions (
+                id         INTEGER PRIMARY KEY DEFAULT nextval('notebook_id_seq'),
+                name       VARCHAR(128),
+                cells      JSON,
+                created_at TIMESTAMP DEFAULT (now()),
+                updated_at TIMESTAMP DEFAULT (now())
+            )
+        """)
 
     # ──────────────────────────────────────────────
     # K线读写

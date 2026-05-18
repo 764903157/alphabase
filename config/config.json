@@ -1,0 +1,27 @@
+{
+  "data_source": {
+    "akshare_enabled": true,
+    "tushare_token": "33de588109ac3035d2a938717e95c524060d46fd99ca86756931a879",
+    "tdx_dir": "",
+    "qmt_account": "",
+    "qmt_password": "",
+    "qmt_server": "",
+    "api_url": "",
+    "api_key": ""
+  },
+  "llm": {
+    "provider": "siliconflow",
+    "api_key": "",
+    "base_url": "https://api.siliconflow.cn/v1",
+    "model": "Qwen/Qwen3-30B-A3B",
+    "timeout": 120
+  },
+  "backtest": {
+    "initial_capital": 1000000.0,
+    "commission": 0.0002,
+    "stamp_duty": 0.001,
+    "slippage": 0.001
+  },
+  "duckdb_path": "/home/echo/alphabase/data/market.duckdb",
+  "risk_free_rate": 0.03
+}

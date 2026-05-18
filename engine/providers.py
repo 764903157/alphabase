@@ -156,7 +156,8 @@ class TushareProvider(DataProvider):
         if token:
             ts.set_token(token)
         self.ts = ts
-        self.pro = ts.pro()
+        # pro_api() returns a DataApi instance (lazy, no __call__)
+        self.pro_api = ts.pro_api()
 
     def fetch_kline(self, code: str, freq: str = "day",
                     start: Optional[str] = None, end: Optional[str] = None,
@@ -166,29 +167,21 @@ class TushareProvider(DataProvider):
         adj_map = {"qfq": "qfq", "hfq": "hfq", "none": "None"}
         adj = adj_map.get(adjust, "qfq")
 
-        freq_map = {
-            "day": self.ts.daily,
-            "1min": None,
-            "5min": None,
-            "15min": None,
-            "30min": None,
-            "60min": None,
-        }
-        func = freq_map.get(freq)
-        if func is None:
-            # 分钟线用 tushare 分钟接口
-            return pd.DataFrame()
-
         try:
-            df = func(ts_code=c, start_date=start or "", end_date=end or "")
+            # pro_bar needs only basic permissions, returns df with columns:
+            # ts_code, trade_date, open, high, low, close, vol, amount
+            df = self.ts.pro_bar(
+                ts_code=c,
+                freq="D",         # D=日线
+                start_date=start or "",
+                end_date=end or ""
+            )
             if df is None or df.empty:
                 return pd.DataFrame()
             df["ts"] = pd.to_datetime(df["trade_date"])
             df["code"] = c
-            rename = {"open": "open", "high": "high", "low": "low",
-                      "close": "close", "vol": "volume", "amount": "turnover"}
-            df = df.rename(columns=rename)
-            cols = ["code", "ts", "open", "high", "low", "close", "volume", "turnover"]
+            df = df.rename(columns={"vol": "volume", "amount": "turnover"})
+            cols = ["code", "ts", "open", "high", "low", "close", "volume"]
             return df[[c for c in cols if c in df.columns]]
         except Exception as e:
             print(f"[Tushare] fetch_kline error {code}: {e}")

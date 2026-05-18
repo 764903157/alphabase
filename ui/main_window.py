@@ -181,14 +181,15 @@ class BacktestThread(QThread):
     finished = pyqtSignal(object)
     progress = pyqtSignal(str, int)
 
-    def __init__(self, engine: BacktestEngine, code: str, strategy_fn, start: str, end: str,
+    def __init__(self, engine: BacktestEngine, code: str, strategy_fn,
+                 start_date: str, end_date: str,
                  capital: float, name: str, freq: str):
         super().__init__()
         self.engine = engine
         self.code = code
         self.strategy_fn = strategy_fn
-        self.start = start
-        self.end = end
+        self.start_date = start_date
+        self.end_date = end_date
         self.capital = capital
         self.name = name
         self.freq = freq
@@ -199,8 +200,8 @@ class BacktestThread(QThread):
             result = self.engine.run(
                 code=self.code,
                 strategy_fn=self.strategy_fn,
-                start_date=self.start,
-                end_date=self.end,
+                start_date=self.start_date,
+                end_date=self.end_date,
                 initial_capital=self.capital,
                 strategy_name=self.name,
                 freq=self.freq,
@@ -602,9 +603,25 @@ class MainWindow(QMainWindow):
 
     def _open_result_window(self):
         if hasattr(self, "current_result") and self.current_result:
-            win = BacktestResultWindow(self.current_result)
-            win.show()
-            self._log("[窗口] 打开回测结果详情窗口")
+            try:
+                print("[DEBUG] 创建结果窗口...", flush=True)
+                win = BacktestResultWindow(self.current_result)
+                print("[DEBUG] BacktestResultWindow 创建成功", flush=True)
+                # 保存引用防止被GC回收
+                if not hasattr(self, "_result_windows"):
+                    self._result_windows = []
+                self._result_windows.append(win)
+                win.setAttribute(Qt.WA_DeleteOnClose)
+                win.setWindowModality(Qt.NonModal)
+                win.show()
+                win.activateWindow()
+                win.raise_()
+                print("[DEBUG] win.show() 已调用", flush=True)
+                self._log("[窗口] 打开回测结果详情窗口")
+            except Exception as e:
+                import traceback; traceback.print_exc()
+                QMessageBox.critical(self, "错误", f"无法打开结果窗口:\n{e}")
+                self._log(f"[窗口] 打开失败: {e}")
 
     def _run_batch(self):
         QMessageBox.information(self, "批量回测", "批量回测功能开发中，可先使用单票回测验证策略。")

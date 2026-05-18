@@ -1,0 +1,1 @@
+export default function Settings() { return <div style={{color:"#e0e0e0"}}>设置</div>; }

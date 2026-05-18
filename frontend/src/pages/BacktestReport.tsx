@@ -1,0 +1,1 @@
+export default function BacktestReport() { return <div style={{color:"#e0e0e0"}}>回测报告</div>; }

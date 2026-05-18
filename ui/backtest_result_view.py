@@ -12,6 +12,9 @@ import logging
 import sys
 import os
 
+log_handler = logging.StreamHandler(sys.stdout)
+log_handler.setLevel(logging.ERROR)
+logging.getLogger("matplotlib").addHandler(log_handler)
 logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 import matplotlib
@@ -40,7 +43,7 @@ from datetime import datetime
 from typing import Optional
 
 # 全局深色主题 matplotlib 设置
-plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "DejaVu Sans"]
+plt.rcParams["font.sans-serif"] = ["Noto Sans CJK JP", "Microsoft YaHei", "SimHei", "DejaVu Sans"]
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["axes.facecolor"] = "#1e1e1e"
@@ -390,13 +393,24 @@ class BacktestResultWindow(QMainWindow):
         self.result = result
         self.status_label.setText(f"✅ {result.strategy_name} | {result.code} | {result.start_date} ~ {result.end_date}")
 
-        self._render_kpi(result)
-        self._render_main_chart(result)
-        self._render_trades(result)
-        self._render_daily(result)
-        self._render_perf_analysis(result)
-        self._render_monthly_analysis(result)
-        self._render_signal_analysis(result)
+        steps = [
+            ("KPI指标", self._render_kpi),
+            ("主图表", self._render_main_chart),
+            ("交易记录", self._render_trades),
+            ("日收益", self._render_daily),
+            ("绩效分析", self._render_perf_analysis),
+            ("月度分析", self._render_monthly_analysis),
+            ("信号分析", self._render_signal_analysis),
+        ]
+        for name, fn in steps:
+            try:
+                fn(result)
+                print(f"[ResultWindow] ✅ {name} 渲染完成", flush=True)
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                print(f"[ResultWindow] ❌ {name} 渲染失败: {e}", flush=True)
+                self.status_label.setText(f"⚠️ {name}渲染异常: {e}")
 
     # ──────────────────────────────────────────────
     # 渲染方法
@@ -473,7 +487,7 @@ class BacktestResultWindow(QMainWindow):
                       fontsize=9, color="#aaa")
         # 标注最大回撤点
         min_idx = np.argmin(drawdown)
-        ax2.annotate(f"最大回撤\n{r.drawdown[min_idx]:.2f}%",
+        ax2.annotate(f"最大回撤\n{drawdown[min_idx]:.2f}%",
                       xy=(dates[min_idx], drawdown[min_idx]),
                       xytext=(10, -20), textcoords="offset points",
                       fontsize=7, color="#ff6b6b",
